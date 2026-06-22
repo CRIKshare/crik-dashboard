@@ -522,7 +522,7 @@ function renderCostGrid(){
     html+="<div class=\"cost-name\">"+p.name+"</div>";
     html+="<div class=\"cost-week-row\">";
     html+="<div class=\"cost-box\"><div class=\"cost-box-label\">今週の投入時間</div><div class=\"cost-box-val\">"+fmtH(p.week_mins)+"</div></div>";
-    html+="<div class=\"cost-box\"><div class=\"cost-box-label\">チームとの差分</div><div class=\"cost-box-val\" style=\"font-size:15px;color:"+(p.diff>60?"var(--yellow)":p.diff<-60?"var(--accent3)":"var(--text-muted)\")\">"+(p.diff>0?"+":"-")+fmtH(diffH)+"</div></div>";
+    html+="<div class=\"cost-box\"><div class=\"cost-box-label\">チームとの差分</div><div class=\"cost-box-val\" style=\"font-size:15px;color:"+(p.diff>60?"var(--yellow)":p.diff<-60?"var(--accent3)":"var(--text-muted)")+"\">"+(p.diff>0?"+":"-")+fmtH(diffH)+"</div></div>";
     html+="</div>";
     html+="<div class=\"cost-value-block\">";
     html+="<div class=\"cost-value-label\">今週分：最低限生み出すべき価値</div>";
