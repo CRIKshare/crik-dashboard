@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRIK カレンダー入力ルール</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f5f3ee;
+    --surface: #ffffff;
+    --border: #e0dbd0;
+    --text: #1a1814;
+    --text-muted: #8a8070;
+    --accent: #2d5a3d;
+    --accent2: #c8440a;
+    --accent3: #1a3a6b;
+    --yellow: #f5c842;
+    --green: #2d5a3d;
+    --red: #c8440a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'BIZ UDPGothic', sans-serif; line-height: 1.7; }
+
+  /* ヘッダー */
+  header {
+    background: var(--accent);
+    color: white;
+    padding: 40px 48px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::after {
+    content: '【】';
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 120px;
+    font-weight: 700;
+    opacity: .08;
+    font-family: 'DM Mono', monospace;
+    line-height: 1;
+  }
+  header .label {
+    font-size: 11px;
+    letter-spacing: .25em;
+    opacity: .7;
+    margin-bottom: 8px;
+    font-family: 'DM Mono', monospace;
+  }
+  header h1 { font-size: 26px; font-weight: 700; line-height: 1.3; }
+  header .sub { font-size: 13px; opacity: .75; margin-top: 8px; }
+
+  .container { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* セクション */
+  .section { margin-bottom: 48px; }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    border-left: 4px solid var(--accent);
+    padding-left: 12px;
+    margin-bottom: 20px;
+  }
+
+  /* ルールカード */
+  .rule-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .rule-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rule-number {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .rule-header h3 { font-size: 16px; font-weight: 700; }
+  .rule-body { padding: 20px; }
+
+  /* コードブロック */
+  .code-block {
+    background: #1a1814;
+    color: #e8e4dc;
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    line-height: 2;
+    margin: 12px 0;
+  }
+  .code-block .tag { color: #f5c842; }
+  .code-block .content { color: #a0d4b0; }
+  .code-block .comment { color: #8a8070; font-size: 12px; }
+
+  /* 比較ブロック */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .compare-box {
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13px;
+  }
+  .compare-bad {
+    background: #fdf0ec;
+    border: 1px solid #f0c4b0;
+  }
+  .compare-good {
+    background: #edf5f0;
+    border: 1px solid #a0cdb0;
+  }
+  .compare-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-family: 'DM Mono', monospace;
+  }
+  .compare-bad .compare-label { color: var(--red); }
+  .compare-good .compare-label { color: var(--green); }
+  .compare-box .item {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+  }
+  .compare-box .item:last-child { border-bottom: none; }
+
+  /* タグ一覧 */
+  .tag-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 12px 0;
+  }
+  .tag-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .tag-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .tag-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+  .tag-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .tag-item.tag-new { border: 1px solid var(--accent); background: #edf5f0; }
+  .tag-new-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    color: white;
+    background: var(--accent);
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-left: 6px;
+    vertical-align: middle;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* 注意ボックス */
+  .alert {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 13px;
+    line-height: 1.8;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .alert-warn { background: #fff8e8; border: 1px solid #f0d880; }
+  .alert-info { background: #edf3fc; border: 1px solid #a0b8e0; }
+  .alert-ok { background: #edf5f0; border: 1px solid #a0cdb0; }
+  .alert strong { display: block; margin-bottom: 4px; font-size: 14px; }
+
+  /* サフィックス */
+  .suffix-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .suffix-card {
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .suffix-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent3);
+    margin-bottom: 6px;
+  }
+  .suffix-desc { font-size: 13px; color: var(--text-muted); }
+  .suffix-example {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* フロー */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 12px 0;
+  }
+  .flow-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .flow-step-num {
+    width: 24px; height: 24px;
+    background: var(--accent3);
+    color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .flow-arrow {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  /* 構文パネル */
+  .syntax-panel {
+    background: #1a1814;
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .syntax-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+  }
+  .syntax-panel-title {
+    font-size: 10px;
+    letter-spacing: .25em;
+    color: rgba(255,255,255,.45);
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 20px;
+  }
+  .syntax-formula {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .syntax-part {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .syntax-part-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 10px 4px;
+  }
+  .syntax-part-bracket { color: rgba(255,255,255,.4); }
+  .syntax-part-tag { color: #f5c842; }
+  .syntax-part-under { color: rgba(255,255,255,.3); }
+  .syntax-part-suffix { color: #a0d4ff; }
+  .syntax-part-title { color: #a0d4b0; }
+  .syntax-part-label {
+    font-size: 10px;
+    color: rgba(255,255,255,.4);
+    letter-spacing: .05em;
+    white-space: nowrap;
+    font-family: 'BIZ UDPGothic', sans-serif;
+    border-top: 1px solid rgba(255,255,255,.12);
+    padding-top: 6px;
+    text-align: center;
+    min-width: 60px;
+  }
+  .syntax-divider {
+    color: rgba(255,255,255,.2);
+    font-size: 13px;
+    padding: 8px 16px 0;
+    font-family: 'DM Mono', monospace;
+    align-self: flex-start;
+    margin-top: 10px;
+  }
+  .syntax-variants {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .syntax-variant {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .syntax-variant-label {
+    font-size: 10px;
+    color: rgba(255,255,255,.4);
+    letter-spacing: .1em;
+    margin-bottom: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+  .syntax-variant-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .syntax-suffix-table {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,.1);
+  }
+  .syntax-suffix-item {
+    background: rgba(160,212,255,.08);
+    border: 1px solid rgba(160,212,255,.2);
+    border-radius: 6px;
+    padding: 10px 10px;
+    text-align: center;
+  }
+  .syntax-suffix-item .s-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #a0d4ff;
+    margin-bottom: 4px;
+  }
+  .syntax-suffix-item .s-desc {
+    font-size: 10px;
+    color: rgba(255,255,255,.45);
+    line-height: 1.4;
+  }
+  @media(max-width: 600px) {
+    .syntax-variants { grid-template-columns: 1fr; }
+    .syntax-suffix-table { grid-template-columns: repeat(2, 1fr); }
+    .syntax-part-text { font-size: 16px; }
+  }
+
+  footer {
+    background: var(--accent);
+    color: rgba(255,255,255,.7);
+    text-align: center;
+    padding: 24px;
+    font-size: 12px;
+    margin-top: 40px;
+  }
+
+  @media(max-width: 600px) {
+    .compare { grid-template-columns: 1fr; }
+    .suffix-grid { grid-template-columns: 1fr; }
+    header { padding: 28px 24px; }
+    .container { padding: 24px 16px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="label">CRIK — カレンダー運用ガイド 2026年版（2026/07 改訂：博多区・指導タグ追加）</div>
+  <h1>カレンダー入力ルール<br>説明書</h1>
+  <div class="sub">週次集計・収益分析を正確にするための入力ルール</div>
+</header>
+
+<div class="container">
+
+  <!-- なぜ必要か -->
+  <div class="section">
+    <div class="section-title">なぜルールが必要か</div>
+    <div class="alert alert-info">
+      <div class="alert-icon">📊</div>
+      <div>
+        <strong>カレンダーのデータが自動で集計・分析されます</strong>
+        みなさんのカレンダーは毎週月曜に自動で収集され、事業別の労働時間・人件費・収益率として集計されます。入力が正確なほど、分析が正確になります。
+      </div>
+    </div>
+  </div>
+
+  <!-- 基本構文パネル -->
+  <div class="syntax-panel">
+    <div class="syntax-panel-title">カレンダー入力の基本構文</div>
+
+    <!-- 構文式 -->
+    <div class="syntax-formula">
+      <div class="syntax-part">
+        <div class="syntax-part-text syntax-part-bracket">【</div>
+        <div class="syntax-part-label"></div>
+      </div>
+      <div class="syntax-part">
+        <div class="syntax-part-text syntax-part-tag">正規タグ</div>
+        <div class="syntax-part-label">登録済みタグ名</div>
+      </div>
+      <div class="syntax-part">
+        <div class="syntax-part-text syntax-part-under">_</div>
+        <div class="syntax-part-label">省略可</div>
+      </div>
+      <div class="syntax-part">
+        <div class="syntax-part-text syntax-part-suffix">サフィックス</div>
+        <div class="syntax-part-label">省略可（4種）</div>
+      </div>
+      <div class="syntax-part">
+        <div class="syntax-part-text syntax-part-bracket">】</div>
+        <div class="syntax-part-label"></div>
+      </div>
+      <div class="syntax-part" style="margin-left:8px">
+        <div class="syntax-part-text syntax-part-title">予定タイトル</div>
+        <div class="syntax-part-label">内容を自由に記述</div>
+      </div>
+    </div>
+
+    <!-- バリエーション例 -->
+    <div class="syntax-variants">
+      <div class="syntax-variant">
+        <div class="syntax-variant-label">▶ サフィックスなし（基本）</div>
+        <div class="syntax-variant-text">
+          <span style="color:#f5c842">【あすみん】</span><span style="color:#a0d4b0">本部委員会</span><br>
+          <span style="color:#f5c842">【CRIK総務】</span><span style="color:#a0d4b0">理事会資料作成</span>
+        </div>
+      </div>
+      <div class="syntax-variant">
+        <div class="syntax-variant-label">▶ サフィックスあり（わじろ・あすみん等）</div>
+        <div class="syntax-variant-text">
+          <span style="color:#f5c842">【わじろ</span><span style="color:rgba(255,255,255,.35)">_</span><span style="color:#a0d4ff">勤務</span><span style="color:#f5c842">】</span><span style="color:#a0d4b0">えんにち本番 2F担当</span><br>
+          <span style="color:#f5c842">【あすみん</span><span style="color:rgba(255,255,255,.35)">_</span><span style="color:#a0d4ff">デザイン</span><span style="color:#f5c842">】</span><span style="color:#a0d4b0">チラシ制作</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- サフィックス4種 -->
+    <div class="syntax-suffix-table">
+      <div class="syntax-suffix-item">
+        <div class="s-tag">_勤務</div>
+        <div class="s-desc">現場・館内業務</div>
+      </div>
+      <div class="syntax-suffix-item">
+        <div class="s-tag">_デザイン</div>
+        <div class="s-desc">制作・メディア</div>
+      </div>
+      <div class="syntax-suffix-item">
+        <div class="s-tag">_会議</div>
+        <div class="s-desc">MTG・打合せ</div>
+      </div>
+      <div class="syntax-suffix-item">
+        <div class="s-tag">_事務</div>
+        <div class="s-desc">書類・報告・管理</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 基本ルール -->
+  <div class="section">
+    <div class="section-title">基本ルール</div>
+
+    <div class="rule-card">
+      <div class="rule-header">
+        <div class="rule-number">1</div>
+        <h3>必ず【事業タグ】を先頭に書く</h3>
+      </div>
+      <div class="rule-body">
+        <p style="margin-bottom:12px">予定タイトルの先頭に、<strong>【】（隅付き括弧）で囲んだ事業タグ</strong>を必ず入れてください。</p>
+        <div class="code-block">
+          <span class="tag">【あすみん】</span><span class="content">本部委員会</span><br>
+          <span class="tag">【わじろ】</span><span class="content">GoGo準備　設営チェック</span><br>
+          <span class="tag">【オトナビ】</span><span class="content">コーディネーター会議</span><br>
+          <span class="tag">【CRIK総務】</span><span class="content">理事会資料作成</span>
+        </div>
+        <div class="compare">
+          <div class="compare-box compare-bad">
+            <div class="compare-label">❌ NG</div>
+            <div class="item">本部委員会</div>
+            <div class="item">GoGo準備</div>
+            <div class="item">理事会資料</div>
+          </div>
+          <div class="compare-box compare-good">
+            <div class="compare-label">✅ OK</div>
+            <div class="item">【あすみん】本部委員会</div>
+            <div class="item">【わじろ】GoGo準備</div>
+            <div class="item">【CRIK総務】理事会資料</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-card">
+      <div class="rule-header">
+        <div class="rule-number">2</div>
+        <h3>【】の中は正規タグのみ使う</h3>
+      </div>
+      <div class="rule-body">
+        <p style="margin-bottom:12px">自己流のタグを作らず、以下の<strong>正規タグ一覧</strong>から選んでください。近いものがなければ理事長に相談。</p>
+        <div class="alert alert-warn">
+          <div class="alert-icon">⚠️</div>
+          <div>「CRIK経理」「キッカケラボ」など<strong>略称・旧タグは使わない</strong>でください。システムが自動変換しますが、できるだけ正規タグで入力する習慣をつけてください。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-card">
+      <div class="rule-header">
+        <div class="rule-number">3</div>
+        <h3>終日予定は使わない（時間を入れる）</h3>
+      </div>
+      <div class="rule-body">
+        <p>終日予定は集計から除外されます。<strong>必ず開始時間・終了時間を入力</strong>してください。</p>
+        <div class="compare">
+          <div class="compare-box compare-bad">
+            <div class="compare-label">❌ NG（終日）</div>
+            <div class="item">【あすみん】勤務</div>
+          </div>
+          <div class="compare-box compare-good">
+            <div class="compare-label">✅ OK（時間あり）</div>
+            <div class="item">9:00〜17:00　【あすみん】勤務</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-card">
+      <div class="rule-header">
+        <div class="rule-number" style="background:var(--accent3)">4</div>
+        <h3>職員の指導・個人面談は【指導】を使う（事業タグにしない）</h3>
+      </div>
+      <div class="rule-body">
+        <p style="margin-bottom:12px">スタッフへの1on1・個別指導・面談を行う時間は、<strong>担当している事業のタグではなく必ず【指導】タグ</strong>を使ってください。</p>
+        <div class="compare">
+          <div class="compare-box compare-bad">
+            <div class="compare-label">❌ NG</div>
+            <div class="item">【わじろ】〇〇さん面談</div>
+          </div>
+          <div class="compare-box compare-good">
+            <div class="compare-label">✅ OK</div>
+            <div class="item">【指導】〇〇さん面談</div>
+          </div>
+        </div>
+        <div class="alert alert-info">
+          <div class="alert-icon">ℹ️</div>
+          <div>【指導】は内部業務として集計され、事業の稼働時間・消化率には含まれません。事業タグのまま面談を記録すると、その事業の工数が実態より多く計上されてしまいます。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新ルール：サフィックス -->
+  <div class="section">
+    <div class="section-title">新ルール：業務種別サフィックス（一部事業から導入）</div>
+
+    <div class="alert alert-ok">
+      <div class="alert-icon">🆕</div>
+      <div>
+        <strong>わじろ・あすみん・さいとぴあから先行導入します</strong>
+        同じ事業の中で「現場勤務」と「デザイン制作」を分けて集計するため、タグの後ろに<strong>アンダースコア＋業務種別</strong>をつけます。
+      </div>
+    </div>
+
+    <div class="suffix-grid">
+      <div class="suffix-card">
+        <div class="suffix-tag">【事業名_勤務】</div>
+        <div class="suffix-desc">ポスト職としての現場業務。館内対応・利用者対応など。</div>
+        <div class="suffix-example">例：【わじろ_勤務】GoGoえんにち本番</div>
+      </div>
+      <div class="suffix-card">
+        <div class="suffix-tag">【事業名_デザイン】</div>
+        <div class="suffix-desc">制作・メディア業務。チラシ・バナー・スライドなど。</div>
+        <div class="suffix-example">例：【わじろ_デザイン】えんにちチラシ制作</div>
+      </div>
+      <div class="suffix-card">
+        <div class="suffix-tag">【事業名_会議】</div>
+        <div class="suffix-desc">打ち合わせ・ミーティング・委員会など。</div>
+        <div class="suffix-example">例：【あすみん_会議】本部運営委員会</div>
+      </div>
+      <div class="suffix-card">
+        <div class="suffix-tag">【事業名_事務】</div>
+        <div class="suffix-desc">書類作成・報告書・経理処理など。</div>
+        <div class="suffix-example">例：【さいとぴあ_事務】年次報告書作成</div>
+      </div>
+    </div>
+
+    <div class="rule-card">
+      <div class="rule-header">
+        <div class="rule-number" style="background:var(--accent3)">例</div>
+        <h3>わじろの1日の入力イメージ</h3>
+      </div>
+      <div class="rule-body">
+        <div class="code-block">
+          9:00〜12:00　<span class="tag">【わじろ_勤務】</span><span class="content">GoGoえんにち本番　2F担当</span><br>
+          13:00〜15:00　<span class="tag">【わじろ_会議】</span><span class="content">事務局会議</span><br>
+          15:00〜17:00　<span class="tag">【わじろ_デザイン】</span><span class="content">次回えんにちチラシのラフ作成</span><br>
+          17:00〜18:00　<span class="tag">【CRIK総務】</span><span class="content">日報・週報作成</span>
+        </div>
+        <div class="alert alert-info">
+          <div class="alert-icon">💡</div>
+          <div>サフィックスなしの<strong>【わじろ】</strong>も引き続き使えます。迷ったらサフィックスなしでOK。分けられるときだけ分ける、という運用で大丈夫です。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 正規タグ一覧 -->
+  <div class="section">
+    <div class="section-title">正規タグ一覧</div>
+    <div class="tag-grid">
+      <div class="tag-item"><div class="tag-dot" style="background:#f76a8a"></div><div><div class="tag-name">あすみん</div><div class="tag-desc">あすみん全般</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#5b8df7"></div><div><div class="tag-name">わじろ</div><div class="tag-desc">わじろコミセン</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#c86af7"></div><div><div class="tag-name">さいとぴあ</div><div class="tag-desc">さいとぴあ</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#6af7c8"></div><div><div class="tag-name">オトナビ</div><div class="tag-desc">オトナビ事業</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#f7c86a"></div><div><div class="tag-name">キッカケ</div><div class="tag-desc">キッカケラボ</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#f7a06a"></div><div><div class="tag-name">支援員</div><div class="tag-desc">地域福祉支援員</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#6af7b8"></div><div><div class="tag-name">NPO伴走</div><div class="tag-desc">伴走支援事業</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#f76ab8"></div><div><div class="tag-name">ビールームMT</div><div class="tag-desc">ビールーム会議</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#a0c8f7"></div><div><div class="tag-name">博物館</div><div class="tag-desc">博物館・facata</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#f7d06a"></div><div><div class="tag-name">沖ノ島</div><div class="tag-desc">世界遺産・沖ノ島</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#c8f76a"></div><div><div class="tag-name">MAN</div><div class="tag-desc">南区アートネクスト</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#6af0f7"></div><div><div class="tag-name">コミュコミュ</div><div class="tag-desc">城南区コミュコミュ</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#f76a6a"></div><div><div class="tag-name">SOS</div><div class="tag-desc">SOS子どもの村</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#f7906a"></div><div><div class="tag-name">灯明メディア</div><div class="tag-desc">博多灯明ウォッチング</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#90f76a"></div><div><div class="tag-name">体育館メディア</div><div class="tag-desc">体育館広報</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#f7e06a"></div><div><div class="tag-name">委員講座</div><div class="tag-desc">委員・講座業務</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#6aa8f7"></div><div><div class="tag-name">MG会議</div><div class="tag-desc">MG合同会議</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#7c6af7"></div><div><div class="tag-name">CRIK総務</div><div class="tag-desc">総務・法人管理全般</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#a0f76a"></div><div><div class="tag-name">CRIKMT</div><div class="tag-desc">全体会議・定例</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#e06af7"></div><div><div class="tag-name">Study</div><div class="tag-desc">学習・研修</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#888"></div><div><div class="tag-name">ルーティン</div><div class="tag-desc">メール・掃除など</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#444"></div><div><div class="tag-name">移動</div><div class="tag-desc">移動時間</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#333"></div><div><div class="tag-name">休み</div><div class="tag-desc">有給・休暇</div></div></div>
+      <div class="tag-item"><div class="tag-dot" style="background:#66a"></div><div><div class="tag-name">その他メディア</div><div class="tag-desc">分類外のメディア制作</div></div></div>
+      <div class="tag-item tag-new"><div class="tag-dot" style="background:#4ac8f7"></div><div><div class="tag-name">博多区<span class="tag-new-badge">NEW</span></div><div class="tag-desc">博多区事業（受注案件）</div></div></div>
+      <div class="tag-item tag-new"><div class="tag-dot" style="background:#a0836a"></div><div><div class="tag-name">指導<span class="tag-new-badge">NEW</span></div><div class="tag-desc">職員指導・個人面談（内部扱い）</div></div></div>
+    </div>
+  </div>
+
+  <!-- 入力フロー -->
+  <div class="section">
+    <div class="section-title">入力の流れ（毎回）</div>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-step-num">1</div>
+        <div>Googleカレンダーで予定を作成・編集する</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-step-num">2</div>
+        <div>タイトルの先頭に <strong>【正規タグ】</strong> を入力する</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-step-num">3</div>
+        <div>わじろ・あすみん・さいとぴあは <strong>_勤務 / _デザイン / _会議 / _事務</strong> をつける（できるときだけ）</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-step-num">4</div>
+        <div>指導・面談は事業タグにせず <strong>【指導】</strong> を使う</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-step-num">5</div>
+        <div><strong>開始時間・終了時間</strong> を必ず設定する（終日予定にしない）</div>
+      </div>
+      <div class="flow-arrow">↓</div>
+      <div class="flow-step">
+        <div class="flow-step-num" style="background:var(--accent)">✓</div>
+        <div>毎週月曜9時に自動で集計・ダッシュボードへ反映されます</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Q&A -->
+  <div class="section">
+    <div class="section-title">よくある質問</div>
+
+    <div class="rule-card">
+      <div class="rule-header">
+        <div class="rule-number" style="background:var(--accent3)">Q</div>
+        <h3>迷ったらどうすればいい？</h3>
+      </div>
+      <div class="rule-body">
+        <div class="alert alert-ok">
+          <div class="alert-icon">💬</div>
+          <div>サフィックスは「できるときだけ」で大丈夫です。迷ったら<strong>【わじろ】</strong>のようにサフィックスなしで入力してください。システムが自動で処理します。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-card">
+      <div class="rule-header">
+        <div class="rule-number" style="background:var(--accent3)">Q</div>
+        <h3>一覧にないタグを使いたい場合は？</h3>
+      </div>
+      <div class="rule-body">
+        <div class="alert alert-warn">
+          <div class="alert-icon">⚠️</div>
+          <div>勝手に新しいタグを作らず、<strong>理事長に相談</strong>してください。新タグが必要な場合はシステムに追加します。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-card">
+      <div class="rule-header">
+        <div class="rule-number" style="background:var(--accent3)">Q</div>
+        <h3>過去の予定を直す必要はある？</h3>
+      </div>
+      <div class="rule-body">
+        <div class="alert alert-info">
+          <div class="alert-icon">ℹ️</div>
+          <div>過去分は修正不要です。<strong>今日から</strong>正しい入力で進めてください。システムが旧タグも自動変換します。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  CRIK カレンダー入力ルール 2026年版（2026/07改訂）　|　不明点は理事長へ
+</footer>
+
+</body>
+</html>
